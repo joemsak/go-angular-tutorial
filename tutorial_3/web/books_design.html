@@ -1,56 +1,110 @@
 <!doctype html>
 <html lang="en" ng-app="myapp">
 <head>
-	<meta charset="UTF-8">
-	<title>My Bookshelf</title>
-	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
-	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootswatch/3.1.0/cyborg/bootstrap.min.css">
-	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
+  <meta charset="UTF-8">
+  <title>My Bookshelf</title>
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootswatch/3.1.0/cyborg/bootstrap.min.css">
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
 </head>
 <!-- putting this at the top to remove the jarring load -->
 <script src="http://code.angularjs.org/1.2.10/angular.min.js"></script>
 <body ng-controller="MainCtl">
-	<div class="jumbotron">
-		<button class="btn btn-primary pull-right">
-			<i class="fa fa-plus"></i> Add book
-		</button>
-		<h1>My Bookshelf</h1>
-	</div>
-	<div class="container-fluid">
-		<div class="row">
-			<div class="col-sm-3 well">
-				<h3>Books</h3>
-				<ul class="nav nav-pills nav-stacked">
-					<li><a href="">Book1</a></li>
-					<li><a href="">Book2</a></li>
-				</ul>
-			</div>
-			<div class="col-sm-6">
-				<h2>Title</h2>
-				<dl class="dl-horizontal">
-					<dt>Author:</dt>
-					<dd>Me, perhaps</dd>
-				</dl>
-			</div>
-			<div class="col-sm-3">
-				<button class="btn btn-primary form-control">
-					<i class="fa fa-pencil"></i> Update this book
-				</button>
-				<button class="btn btn-danger form-control">
-					<i class="fa fa-trash-o"></i> Remove this book
-				</button>
-			</div>
-		</div>
-	</div>
+  <div class="jumbotron">
+    <button class="btn btn-primary pull-right" ng-click="add()">
+      <i class="fa fa-plus"></i> Add book
+    </button>
+    <h1>My Bookshelf</h1>
+  </div>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-sm-3 well">
+        <h3>Books</h3>
+        <ul class="nav nav-pills nav-stacked">
+          <li ng-repeat="book in books" ng-class="{ active: selected.title == book.title }">
+            <a href="" ng-click="get(book)">{{book.title}}</a>
+          </li>
+        </ul>
+      </div>
+      <div class="col-sm-6" ng-show="selected">
+        <h2>{{selected.title}}</h2>
+        <dl class="dl-horizontal">
+          <dt>Author:</dt>
+          <dd>{{selected.author}}</dd>
+        </dl>
+      </div>
+      <div class="col-sm-3" ng-show="selected">
+        <button class="btn btn-primary form-control" ng-click="update(selected)">
+          <i class="fa fa-pencil"></i> Update this book
+        </button>
+        <button class="btn btn-danger form-control" ng-click="remove(selected)">
+          <i class="fa fa-trash-o"></i> Remove this book
+        </button>
+      </div>
+    </div>
+  </div>
 <script src="http://code.angularjs.org/1.2.10/angular-resource.min.js"></script>
 <script>
-	// new dependency: ngResource is included just above
-	var myapp = new angular.module("myapp", ["ngResource"]);
+  // new dependency: ngResource is included just above
+  var myapp = new angular.module("myapp", ["ngResource"]);
 
-	// inject the $resource dependency here
-	myapp.controller("MainCtl", ["$scope", "$resource", function($scope, $resource){
-		
-	}]);
+  // inject the $resource dependency here
+  myapp.controller("MainCtl", ["$scope", "$resource", function($scope, $resource){
+    var Book = $resource('/books/:id', { id: '@id' }, {});
+
+    $scope.selected = null;
+    $scope.books = Book.query();
+
+    $scope.get = function(book) {
+      Book.get({ id: book.id }, function(data) {
+        $scope.selected = data;
+      });
+    }
+
+    $scope.remove = function(book) {
+      $scope.selected.$delete(function() {
+        $scope.books = Book.query();
+      });
+    }
+
+    $scope.add = function() {
+      var title = prompt("Enter the book's title.");
+      if (title == null) {
+        return;
+      }
+
+      var author = prompt("Enter the book's author.");
+      if (author == null) {
+        return;
+      }
+
+      var book = new Book();
+      _updateBook(book, title, author);
+    }
+
+    $scope.update = function(book) {
+      var title = prompt("Edit the book's title:", book.title);
+      if (title == null) {
+        return;
+      }
+
+      var author = prompt("Edit the book's author:", book.author);
+      if (author == null) {
+        return;
+      }
+
+      _updateBook(book, title, author);
+    }
+
+    var _updateBook = function(book, title, author) {
+      book.title = title;
+      book.author = author;
+
+      book.$save(function() {
+        $scope.books = Book.query();
+      });
+    }
+  }]);
 </script>
 </body>
 </html>
