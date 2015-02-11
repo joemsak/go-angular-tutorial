@@ -164,7 +164,7 @@ func getNextId() int {
 
 func main() {
 	// command line flags
-	port := flag.Int("port", 80, "port to serve on")
+	port := flag.Int("port", 9000, "port to serve on")
 	dir := flag.String("directory", "web/", "directory of web files")
 	flag.Parse()
 
